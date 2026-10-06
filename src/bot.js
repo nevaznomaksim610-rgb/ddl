@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { PROGRAMS, GROUPS, TYPES, MODES, moscowNow, plusDays, parseDate, formatDate, deadlineText } from './catalog.js';
+import { PROGRAMS, GROUPS, COURSES, TYPES, MODES, moscowNow, plusDays, parseDate, formatDate, deadlineText } from './catalog.js';
 import { transaction } from './database.js';
 
 const button = (text, callback_data) => ({ text, callback_data });
@@ -75,13 +75,14 @@ export class DeadlineBot {
     (await this.send(user, 'Выбери курс. Курс, направление и группа сохраняются один раз.', keyboard([[button('1 курс', 'course:1'), button('2 курс', 'course:2')]])));
   }
 
-  async programs(user) {
-    (await this.setSession(user.id, { step: 'program' }));
-    (await this.send(user, 'Выбери направление второго курса:', keyboard([...Object.entries(PROGRAMS).map(([key, p]) => [button(p.label, `program:${key}`)]), [button('Назад', 'onboard:back')]])));
+  async programs(user, course) {
+    (await this.setSession(user.id, { step: 'program', course }));
+    const programs = Object.entries(PROGRAMS).filter(([, p]) => p.course === course);
+    (await this.send(user, `Выбери направление ${COURSES[course]} курса:`, keyboard([...programs.map(([key, p]) => [button(p.label, `program:${key}`)]), [button('Назад', 'onboard:back')]])));
   }
 
   async groups(user, program) {
-    (await this.setSession(user.id, { step: 'group', program }));
+    (await this.setSession(user.id, { step: 'group', course: PROGRAMS[program].course, program }));
     const groups = PROGRAMS[program].groups;
     const rows = [];
     for (let i = 0; i < groups.length; i += 2) rows.push(groups.slice(i, i + 2).map(g => button(g, `group:${g}`)));
@@ -278,12 +279,14 @@ export class DeadlineBot {
     const [action, arg, value] = data.split(':');
     if (action === 'course' || action === 'program' || action === 'group' || action === 'onboard') {
       if (user.group_id) { (await this.home(user)); return; }
-      if (action === 'onboard') { (await this.programs(user)); return; }
+      if (action === 'onboard') {
+        if (session.step === 'group' && Object.hasOwn(COURSES, session.course)) (await this.programs(user, session.course)); else (await this.courses(user));
+        return;
+      }
       if (action === 'course' && session.step === 'course') {
-        if (arg === '1') { (await this.send(user, 'Первый курс пока не подключён. Сейчас доступен второй курс.')); (await this.courses(user)); }
-        else if (arg === '2') (await this.programs(user));
+        if (Object.hasOwn(COURSES, arg)) (await this.programs(user, Number(arg)));
         else (await this.stale(user));
-      } else if (action === 'program' && session.step === 'program' && Object.hasOwn(PROGRAMS, arg)) (await this.groups(user, arg));
+      } else if (action === 'program' && session.step === 'program' && Object.hasOwn(PROGRAMS, arg) && PROGRAMS[arg].course === session.course) (await this.groups(user, arg));
       else if (action === 'group' && session.step === 'group' && GROUPS[arg] === session.program) {
         const admin = (await this.admin(user.id));
         if (admin && (!admin.group_id || admin.group_id !== arg)) {
@@ -291,7 +294,7 @@ export class DeadlineBot {
           if ((await this.db.prepare('SELECT 1 FROM admins WHERE group_id=?').get(arg))) { (await this.send(user, 'У этой группы уже есть админ. Свяжись с владельцем бота.')); return; }
           (await this.db.prepare('UPDATE admins SET group_id=? WHERE user_id=?').run(arg, user.id));
         }
-        (await this.db.prepare('UPDATE users SET course=2,program=?,group_id=?,session=\'{}\' WHERE id=?').run(session.program, arg, user.id));
+        (await this.db.prepare('UPDATE users SET course=?,program=?,group_id=?,session=\'{}\' WHERE id=?').run(PROGRAMS[session.program].course, session.program, arg, user.id));
         const registered = (await this.user(user.id));
         (await this.home(registered));
         (await this.notifications(registered));

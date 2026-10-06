@@ -34,9 +34,9 @@ function fixture(t, path = ':memory:') {
 
 test('регистрация сохраняется один раз; чужие группы не принимаются', async t => {
   const f = fixture(t);
-  (await f.message(1, '/start')); (await f.callback(1, 'course:1'));
+  (await f.message(1, '/start')); (await f.callback(1, 'course:3'));
   assert.equal((await f.bot.user(1)).group_id, null);
-  assert.match((await f.latest(1)).text, /Выбери курс/);
+  assert.match((await f.latest(1)).text, /неактуальна/);
   (await f.callback(1, 'course:2')); (await f.callback(1, 'program:management')); (await f.callback(1, 'group:25.Б15-вшм'));
   assert.equal((await f.bot.user(1)).group_id, null);
   (await f.callback(1, 'group:25.Б03-вшм'));
@@ -54,6 +54,33 @@ test('все три направления регистрируются; гру�
   (await f.grant(3)); (await f.register(3, 'public', '25.Б10-вшм'));
   assert.equal((await f.bot.user(3)).group_id, null);
   assert.match((await f.latest(3)).text, /уже есть админ/);
+});
+
+test('первый курс: свои направления и группы, чужой курс не принимается', async t => {
+  const f = fixture(t);
+  (await f.message(1, '/start')); (await f.callback(1, 'course:1'));
+  assert.match((await f.latest(1)).text, /первого курса/);
+  assert.ok(!JSON.stringify((await f.latest(1)).reply_markup).includes('program:management"'));
+  (await f.callback(1, 'program:management'));
+  assert.equal(f.bot.session((await f.bot.user(1))).step, 'program');
+  (await f.callback(1, 'program:management1')); (await f.callback(1, 'group:25.Б01-вшм'));
+  assert.equal((await f.bot.user(1)).group_id, null);
+  (await f.callback(1, 'onboard:back'));
+  assert.match((await f.latest(1)).text, /первого курса/);
+  (await f.callback(1, 'onboard:back'));
+  assert.match((await f.latest(1)).text, /Выбери курс/);
+  (await f.callback(1, 'course:1')); (await f.callback(1, 'program:international1')); (await f.callback(1, 'group:26.Б13-вшм'));
+  const user = (await f.bot.user(1));
+  assert.deepEqual([user.course, user.program, user.group_id], [1, 'international1', '26.Б13-вшм']);
+  (await f.grant(1)); (await f.callback(1, 'add:quick')); (await f.callback(1, `kind:${(await f.nonce(1))}:homework`));
+  assert.match(JSON.stringify((await f.latest(1)).reply_markup), /Macroeconomics/);
+  (await f.message(1, '/add')); (await f.callback(1, `kind:${(await f.nonce(1))}:test`));
+  (await f.message(1, 'Математика: контрольная 1')); (await f.message(1, '10.10.2026')); (await f.callback(1, `skip:${(await f.nonce(1))}`)); (await f.callback(1, `save:${(await f.nonce(1))}`));
+  (await f.register(2, 'international', '25.Б13-вшм'));
+  (await f.message(2, '/status'));
+  assert.match((await f.latest(2)).text, /пока нет текущих дедлайнов/);
+  (await f.message(1, '/status'));
+  assert.match((await f.latest(1)).text, /Математика: контрольная 1/);
 });
 
 test('внешние групповые сообщения игнорируются', async t => {

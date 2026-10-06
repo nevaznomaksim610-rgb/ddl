@@ -1,23 +1,49 @@
 export const PROGRAMS = {
   management: {
+    course: 2,
     name: 'Менеджмент (с дополнительной квалификацией «Бизнес-аналитик»)',
     label: 'Менеджмент / Бизнес-аналитик',
     groups: Array.from({ length: 8 }, (_, i) => `25.Б${String(i + 1).padStart(2, '0')}-вшм`),
     subjects: ['Маркетинг', 'Предпринимательство', 'Статистика', 'Управление человеческими ресурсами', 'Финансовый анализ', 'Этика управления'],
   },
   public: {
+    course: 2,
     name: 'Государственное и муниципальное управление',
     label: 'Государственное и муниципальное управление',
     groups: ['25.Б10-вшм', '25.Б11-вшм'],
     subjects: [],
   },
   international: {
+    course: 2,
     name: 'Международный менеджмент',
     label: 'Международный менеджмент',
     groups: ['25.Б13-вшм', '25.Б15-вшм'],
     subjects: ['Chinese', 'Entrepreneurship', 'Financial Analysis', 'International Economics', 'Law', 'Marketing', 'Statistics'],
   },
+  management1: {
+    course: 1,
+    name: 'Менеджмент (с дополнительной квалификацией «Бизнес-аналитик»)',
+    label: 'Менеджмент / Бизнес-аналитик',
+    groups: Array.from({ length: 8 }, (_, i) => `26.Б${String(i + 1).padStart(2, '0')}-вшм`),
+    subjects: ['Введение в финансы', 'Деловые коммуникации', 'История бизнеса', 'История России', 'Макроэкономика', 'Математика для менеджеров 1', 'Основы российской государственности', 'Цифровые инструменты для менеджеров 1'],
+  },
+  public1: {
+    course: 1,
+    name: 'Государственное и муниципальное управление',
+    label: 'Государственное и муниципальное управление',
+    groups: ['26.Б10-вшм'],
+    subjects: ['Введение в финансы', 'Деловые коммуникации', 'История России', 'Макроэкономика', 'Математика для менеджеров 1', 'Основы российской государственности', 'Система государственного и муниципального управления', 'Цифровые инструменты для менеджеров 1'],
+  },
+  international1: {
+    course: 1,
+    name: 'Международный менеджмент',
+    label: 'Международный менеджмент',
+    groups: ['26.Б13-вшм', '26.Б14-вшм'],
+    subjects: ['Business Communications', 'Business History', 'Digital Tools for Managers 1', 'Fundamentals of Russian Statehood', 'History of Russia', 'Introduction to Finance', 'Macroeconomics', 'Math for Managers 1'],
+  },
 };
+
+export const COURSES = { 1: 'первого', 2: 'второго' };
 
 export const GROUPS = Object.fromEntries(Object.entries(PROGRAMS).flatMap(([program, info]) => info.groups.map(name => [name, program])));
 export const TYPES = { homework: 'Домашняя работа', test: 'Контрольная', session: 'Сессия' };
