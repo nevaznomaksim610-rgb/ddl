@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "",
+  "outputDirectory": "public",
+  "regions": ["dub1"],
+  "functions": {
+    "api/*.js": { "maxDuration": 60 }
+  },
+  "crons": [
+    { "path": "/api/daily", "schedule": "0 6 * * *" },
+    { "path": "/api/reminders", "schedule": "0 15 * * *" }
+  ]
+}

@@ -1,0 +1,11 @@
+.env
+.env.*
+!.env.example
+data
+logs
+outputs
+test
+scripts
+*.ps1
+node_modules
+.git

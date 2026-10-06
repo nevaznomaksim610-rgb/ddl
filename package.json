@@ -1,0 +1,16 @@
+{
+  "name": "gsom-deadlines-bot",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": "24.x"
+  },
+  "scripts": {
+    "start": "node --env-file=.env src/main.js",
+    "test": "node --test",
+    "admin": "node --env-file=.env src/manage.js"
+  },
+  "dependencies": {
+    "@libsql/client": "^0.18.0"
+  }
+}
